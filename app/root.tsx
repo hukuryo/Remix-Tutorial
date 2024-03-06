@@ -13,7 +13,7 @@ import {
 } from "@remix-run/react";
 import { createEmptyContact, getContacts } from "./data";
 
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import appStylesHref from "./app.css";
 
 export const action = async () => {
@@ -25,13 +25,15 @@ export const links: LinksFunction = () => [
   { rel: "stylesheet", href: appStylesHref },
 ];
 
-export const loader = async () => {
-  const contacts = await getContacts();
-  return json({ contacts });
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q");
+  const contacts = await getContacts(q);
+  return json({ contacts, q });
 };
 
 export default function App() {
-  const { contacts } = useLoaderData<typeof loader>();
+  const { contacts, q } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   return (
@@ -51,6 +53,7 @@ export default function App() {
                 id="q"
                 aria-label="Search contacts"
                 placeholder="Search"
+                defaultValue={q || ""}
                 type="search"
                 name="q"
               />
